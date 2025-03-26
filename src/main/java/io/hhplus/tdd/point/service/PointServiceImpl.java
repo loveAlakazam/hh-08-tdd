@@ -2,9 +2,12 @@ package io.hhplus.tdd.point.service;
 
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import io.hhplus.tdd.exceptions.CustomBusinessException;
+import io.hhplus.tdd.point.UserPointLockManager;
 import io.hhplus.tdd.point.domain.ErrorCode;
 import io.hhplus.tdd.point.domain.PointHistory;
 import io.hhplus.tdd.point.domain.TransactionType;
@@ -27,6 +30,8 @@ public class PointServiceImpl implements PointService {
 
 	private final UserPointRepository userPointRepository;
 	private final PointHistoryRepository pointHistoryRepository;
+	private final UserPointLockManager userPointLockManager;
+	private static final Logger log = LoggerFactory.getLogger(PointServiceImpl.class);
 
 	@Override
 	public GetPointResponse getPoint(GetPointRequest request) {
@@ -40,15 +45,24 @@ public class PointServiceImpl implements PointService {
 		long id = request.id();
 		long amount = request.amount();
 
-		UserPoint userPoint = this.userPointRepository.findById(id);
-		long myPoint = userPoint.point();
+		// 사용자별 lock을 사용하여 다른접근 요청을 제한한다.
+		synchronized (userPointLockManager.getLock(id)) {
+			// 로그기록
+			log.info("::: 🔒 Lock acquired for userId: {}, thread: {}", id, Thread.currentThread().getName());
 
-		// 포인트내역에 '충전' 기록
-		this.pointHistoryRepository.insert(id, amount, TransactionType.CHARGE);
+			// 보유 포인트 조회
+			UserPoint myPoint = this.userPointRepository.findById(id);
 
-		// 포인트 충전
-		UserPoint result = this.userPointRepository.save(id, myPoint + amount);
-		return ChargeResponse.from(result);
+			// 포인트 충전
+			long pointAfterCharge = myPoint.charge(amount);
+
+			// 포인트내역에 '충전' 기록
+			this.pointHistoryRepository.insert(id, amount, TransactionType.CHARGE);
+
+			// 보유포인트 정보 수정
+			UserPoint result = this.userPointRepository.save(id, pointAfterCharge);
+			return ChargeResponse.from(result);
+		}
 	}
 
 
@@ -65,19 +79,17 @@ public class PointServiceImpl implements PointService {
 		long id = request.id();
 		long amount = request.amount();
 
-		UserPoint userPoint = this.userPointRepository.findById(id);
-		long myPoint = userPoint.point();
+		// 보유 포인트 조회
+		UserPoint myPoint = this.userPointRepository.findById(id);
 
-		// 잔고가 사용금액보다 부족할 경우
-		if( amount > myPoint ) {
-			throw new CustomBusinessException(ErrorCode.OVER_USE_AMOUNT_VALUE_THAN_BALANCE_POLICY);
-		}
+		// 포인트 사용
+		long pointAfterUse = myPoint.use(amount);
 
 		// 포인트내역에 '사용' 기록
 		this.pointHistoryRepository.insert(id, amount, TransactionType.USE);
 
-		// 포인트 사용
-		UserPoint result = this.userPointRepository.save(id, myPoint - amount);
+		// 보유포인트 정보 수정
+		UserPoint result = this.userPointRepository.save(id, pointAfterUse);
 		return UseResponse.from(result);
 	}
 }
