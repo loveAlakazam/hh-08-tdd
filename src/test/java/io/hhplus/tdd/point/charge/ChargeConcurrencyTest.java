@@ -18,15 +18,12 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.ResultActions;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.hhplus.tdd.database.PointHistoryTable;
 import io.hhplus.tdd.point.UserPointLockManager;
-import io.hhplus.tdd.point.dto.requests.ChargeRequest;
 import io.hhplus.tdd.point.dto.requests.ChargeRequestBody;
-import io.hhplus.tdd.point.dto.responses.ChargeResponse;
 import io.hhplus.tdd.point.repository.PointHistoryRepository;
 import io.hhplus.tdd.point.repository.PointHistoryRepositoryImpl;
 import io.hhplus.tdd.point.repository.UserPointRepository;
@@ -86,7 +83,7 @@ public class ChargeConcurrencyTest {
 	void 동시에_100번_충전요청을_요청했을때_정상적으로_합산에_성공해야한다() throws Exception {
 		// given
 		long id = 1L;
-		int threadCount = 2;
+		int threadCount = 100;
 		long chargeAmount = 1000L;
 
 		ExecutorService executor = Executors.newFixedThreadPool(10); // 스레드풀 10개
