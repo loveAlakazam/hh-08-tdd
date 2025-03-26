@@ -3,30 +3,31 @@ package io.hhplus.tdd.point.charge;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-import java.lang.reflect.Field;
-import java.util.List;
-
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import io.hhplus.tdd.database.PointHistoryTable;
 import io.hhplus.tdd.point.dto.requests.ChargeRequestBody;
 import io.hhplus.tdd.point.repository.PointHistoryRepository;
-import io.hhplus.tdd.point.repository.PointHistoryRepositoryImpl;
 import io.hhplus.tdd.point.repository.UserPointRepository;
+import io.hhplus.tdd.point.service.PointService;
 
 @SpringBootTest
 @AutoConfigureMockMvc
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 public class ChargePointIntegrationTest {
+
 	@Autowired
 	private MockMvc mockMvc;
+
+	@Autowired
+	private PointService pointService;
 
 	@Autowired
 	private UserPointRepository userPointRepository;
@@ -36,27 +37,6 @@ public class ChargePointIntegrationTest {
 
 	@Autowired
 	private ObjectMapper objectMapper;
-
-	@AfterEach
-	void tearDown() throws NoSuchFieldException, IllegalAccessException {
-		// PointHistoryTable 코드를 변경금지 룰을 지켜야하기때문에
-		// private 요소인 PointHistoryTable을 외부에 가져와야하는 Reflection을 사용할수 밖에 없었습니다.
-		// PointHistoryTable 인스턴스를 리플렉션으로 가져옴
-		Field field = PointHistoryRepositoryImpl.class.getDeclaredField("pointHistoryTable");
-		field.setAccessible(true);
-		PointHistoryTable pointHistoryTable = (PointHistoryTable) field.get(pointHistoryRepository);
-
-		// table 필드 접근해서 clear()
-		Field tableField = PointHistoryTable.class.getDeclaredField("table");
-		tableField.setAccessible(true);
-		List<?> table = (List<?>) tableField.get(pointHistoryTable);
-		table.clear();
-
-		// cursor도 초기화 (선택적)
-		Field cursorField = PointHistoryTable.class.getDeclaredField("cursor");
-		cursorField.setAccessible(true);
-		cursorField.set(pointHistoryTable, 1L);
-	}
 
 
 	@Test
