@@ -11,8 +11,8 @@ import lombok.RequiredArgsConstructor;
 public class UserPointRepositoryImpl implements UserPointRepository{
 	private final UserPointTable userPointTable;
 	@Override
-	public UserPoint save(long id, long amount) {
-		return this.userPointTable.insertOrUpdate(id, amount);
+	public UserPoint save(long id, long point) {
+		return this.userPointTable.insertOrUpdate(id, point);
 	}
 
 	@Override
