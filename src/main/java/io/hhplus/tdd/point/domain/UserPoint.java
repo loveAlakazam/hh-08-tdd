@@ -1,5 +1,7 @@
 package io.hhplus.tdd.point.domain;
 
+import io.hhplus.tdd.exceptions.CustomBusinessException;
+
 public record UserPoint(
         long id,
         long point,
@@ -24,4 +26,19 @@ public record UserPoint(
 
     public static int MIN_USE_POINT_AMOUNT = 100;
     public static int MAX_USE_POINT_AMOUNT = 50000;
+
+
+    // 포인트 충전에 대한 책임 부여
+    public long charge(long amount) {
+        return  this.point + amount; // 포인트 충전
+    }
+
+    // 포인트 사용에 대한 책임 부여
+    public long use(long amount) {
+        // 잔고가 사용금액보다 부족할 경우 CustomBusinessException 예외처리
+        if(amount > this.point) {
+            throw new CustomBusinessException(ErrorCode.OVER_USE_AMOUNT_VALUE_THAN_BALANCE_POLICY);
+        }
+       return this.point - amount; // 포인트 사용
+    }
 }

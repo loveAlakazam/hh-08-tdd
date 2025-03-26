@@ -56,6 +56,21 @@ public class UsePointUnitTest {
 	}
 
 	@Test
+	void 사용금액이_0이하로_유효하지않으면_CustomInvalidRequestException_예외발생() {
+		// given
+		long id = 1L;
+		long invalidAmount =  0L; // 0이하의 부적절한 금액
+
+		// when & then
+		CustomInvalidRequestException ex  = assertThrows(
+			CustomInvalidRequestException.class,
+			() -> pointService.use(new UseRequest(id, invalidAmount))
+		);
+
+		assertEquals(ErrorCode.AMOUNT_POSITIVE_NUMBER_POLICY.getMessage(), ex.getMessage());
+	}
+
+	@Test
 	void 사용금액_amount가__MIN_USE_AMOUNT_VALUE_POLICY_미만으로_유효하지않으면__CustomInvalidRequestException_예외발생() {
 		// given
 		long id = 1L;
@@ -112,28 +127,26 @@ public class UsePointUnitTest {
 	}
 
 	@Test
-	void 포인트사용_성공() {
+	void 보유포인트_15000원에_5000원_사용하면_잔액은_10000원이된다() {
 		// given
 		long id = 1L;
-		long amount = 5000L;
+		long initialPoint = 15000L; // 초기 보유 잔액
+		long amount = 5000L; // 사용금액
 
-		UserPoint mockUserPoint = new UserPoint(id, 15000L, 100L); // 사용 이전 보유잔액 15000L
-		when(userPointRepository.findById(id)).thenReturn(mockUserPoint);
+		UserPoint myPoint = new UserPoint(id, initialPoint, 100L);
+		long pointAfterUse = myPoint.use(amount);
 
-		long myPoint = mockUserPoint.point();
-		long expectedPoint = myPoint - amount; // 사용 이후 예상 보유잔액: 10000L
-
-		UserPoint mockResult = new UserPoint(id, myPoint - amount, 100L);
-		when(userPointRepository.save(id, myPoint - amount)).thenReturn(mockResult);
+		when(userPointRepository.findById(id)).thenReturn(myPoint); // 사용 이전 보유잔액
+		when(userPointRepository.save(id, pointAfterUse))
+			.thenReturn(new UserPoint(id, pointAfterUse, 100L)); // 사용 이후 보유잔액
 
 		// when
-		UseResponse response = this.pointService.use(new UseRequest(id, amount));
+		UseResponse response = this.pointService.use(new UseRequest(id, amount)); // 포인트 5000원 사용 수행
 
 		// then
-		verify(userPointRepository, times(1)).findById(id); // 포인트조회만 1번 호출
+		assertEquals(pointAfterUse, response.point()); // 사용후 예상값과 실제값 비교
 		verify(pointHistoryRepository, times(1)).insert(id, amount, TransactionType.USE); // 포인트 사용 내역 1번 호출
-		verify(userPointRepository, times(1)).save(id, myPoint - amount); // 변경 1번 호출
-
-		assertEquals(expectedPoint, response.point());
+		verify(userPointRepository, times(1)).findById(id); // 포인트조회 1번 호출 검증
+		verify(userPointRepository, times(1)).save(id, pointAfterUse); // save(포인트정보수정) 1번 호출 검증
 	}
 }

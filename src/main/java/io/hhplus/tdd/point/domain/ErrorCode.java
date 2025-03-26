@@ -13,6 +13,7 @@ public enum ErrorCode {
 	 * : CustomInvalidRequestException 예외 메시지에 활용됩니다.
 	 */
 	ID_POSITIVE_NUMBER_POLICY("id 는 양수 여야 합니다."),
+	AMOUNT_POSITIVE_NUMBER_POLICY("포인트값(amount)은 양수 여야 합니다."),
 
 	MIN_CHARGE_AMOUNT_VALUE_POLICY("충전금액은 최소 "+ MIN_CHARGE_POINT_AMOUNT+ "원 이상이어야 합니다."),
 	MAX_CHARGE_AMOUNT_VALUE_POLICY("최대 충전금액은 "+ MAX_CHARGE_POINT_AMOUNT+ "원 입니다."),

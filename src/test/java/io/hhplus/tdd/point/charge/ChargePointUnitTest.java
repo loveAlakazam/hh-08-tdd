@@ -54,6 +54,21 @@ public class ChargePointUnitTest {
 	}
 
 	@Test
+	void 충전금액이_0이하로_유효하지않으면_CustomInvalidRequestException_예외발생() {
+		// given
+		long id = 1L;
+		long invalidAmount =  0L; // 0이하의 부적절한 금액
+
+		// when & then
+		CustomInvalidRequestException ex  = assertThrows(
+			CustomInvalidRequestException.class,
+			() -> pointService.charge(new ChargeRequest(id, invalidAmount))
+		);
+
+		assertEquals(ErrorCode.AMOUNT_POSITIVE_NUMBER_POLICY.getMessage(), ex.getMessage());
+	}
+
+	@Test
 	void 충전금액_amount가__MIN_CHARGE_POINT_AMOUNT_미만으로_유효하지않으면__CustomInvalidRequestException_예외발생() {
 		// given
 		long id = 1L;
@@ -84,27 +99,25 @@ public class ChargePointUnitTest {
 	}
 
 	@Test
-	void 충전_성공() {
+	void 보유포인트_10000원에_5000원_충전하면_잔액은_15000원이된다() {
 		// given
 		long id = 1L;
+		long initialPoint = 10000L; // 초기 보유 잔액
 		long amount = 5000L; // 충전금액
 
-		UserPoint mockUserPoint = new UserPoint(id, 10000L, 100L); // 충전전 보유잔액 10000원
-		when(userPointRepository.findById(id)).thenReturn(mockUserPoint);
+		UserPoint myPoint = new UserPoint(id, initialPoint, 100L);
+		long pointAfterCharged = myPoint.charge(amount);
 
-		long myPoint = mockUserPoint.point();
-		long expectedPoint = myPoint + amount; // 충전후 예상금액 15000L
-
-		UserPoint mockResult = new UserPoint(id, myPoint + amount , 100L);
-		when(userPointRepository.save(id, myPoint + amount)).thenReturn(mockResult);
+		when(userPointRepository.findById(id)).thenReturn(myPoint); // 충전전 보유잔액
+		when(userPointRepository.save(id, pointAfterCharged))
+			.thenReturn(new UserPoint(id, pointAfterCharged, myPoint.updateMillis())); // 충전후 보유잔액
 
 		// when
-		ChargeResponse response = pointService.charge(new ChargeRequest(id, amount));
+		ChargeResponse response = pointService.charge(new ChargeRequest(id, amount)); // 포인트 5000원 충전 수행
 
 		// then
-		verify(pointHistoryRepository, times(1)).insert(id, amount, TransactionType.CHARGE); // insert 호출검증
-		verify(userPointRepository, times(1)).save(id, myPoint + amount);  // save 호출검증
-
-		assertEquals(expectedPoint, response.point());
+		assertEquals(myPoint.charge(amount), response.point()); // 충전후 예상값과 실제값 비교
+		verify(pointHistoryRepository, times(1)).insert(id, amount, TransactionType.CHARGE); // 포인트내역 insert 호출검증
+		verify(userPointRepository, times(1)).save(id, pointAfterCharged );  // save(포인트정보 수정) 호출검증
 	}
 }
