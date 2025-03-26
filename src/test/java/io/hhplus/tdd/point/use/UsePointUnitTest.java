@@ -16,6 +16,7 @@ import io.hhplus.tdd.exceptions.CustomInvalidRequestException;
 import io.hhplus.tdd.point.domain.ErrorCode;
 import io.hhplus.tdd.point.domain.TransactionType;
 import io.hhplus.tdd.point.domain.UserPoint;
+import io.hhplus.tdd.point.dto.requests.ChargeRequest;
 import io.hhplus.tdd.point.dto.requests.UseRequest;
 import io.hhplus.tdd.point.dto.responses.UseResponse;
 import io.hhplus.tdd.point.repository.PointHistoryRepository;
@@ -53,6 +54,21 @@ public class UsePointUnitTest {
 		);
 
 		assertEquals(ErrorCode.ID_POSITIVE_NUMBER_POLICY.getMessage(), ex.getMessage());
+	}
+
+	@Test
+	void 사용금액이_0이하로_유효하지않으면_CustomInvalidRequestException_예외발생() {
+		// given
+		long id = 1L;
+		long invalidAmount =  0L; // 0이하의 부적절한 금액
+
+		// when & then
+		CustomInvalidRequestException ex  = assertThrows(
+			CustomInvalidRequestException.class,
+			() -> pointService.use(new UseRequest(id, invalidAmount))
+		);
+
+		assertEquals(ErrorCode.AMOUNT_POSITIVE_NUMBER_POLICY.getMessage(), ex.getMessage());
 	}
 
 	@Test

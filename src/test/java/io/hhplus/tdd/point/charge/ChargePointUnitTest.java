@@ -54,6 +54,21 @@ public class ChargePointUnitTest {
 	}
 
 	@Test
+	void 충전금액이_0이하로_유효하지않으면_CustomInvalidRequestException_예외발생() {
+		// given
+		long id = 1L;
+		long invalidAmount =  0L; // 0이하의 부적절한 금액
+
+		// when & then
+		CustomInvalidRequestException ex  = assertThrows(
+			CustomInvalidRequestException.class,
+			() -> pointService.charge(new ChargeRequest(id, invalidAmount))
+		);
+
+		assertEquals(ErrorCode.AMOUNT_POSITIVE_NUMBER_POLICY.getMessage(), ex.getMessage());
+	}
+
+	@Test
 	void 충전금액_amount가__MIN_CHARGE_POINT_AMOUNT_미만으로_유효하지않으면__CustomInvalidRequestException_예외발생() {
 		// given
 		long id = 1L;
