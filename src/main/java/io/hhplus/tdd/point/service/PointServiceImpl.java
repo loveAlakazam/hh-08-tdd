@@ -45,7 +45,7 @@ public class PointServiceImpl implements PointService {
 		long id = request.id();
 		long amount = request.amount();
 
-		// 사용자별 lock을 사용하여 다른접근 요청을 제한한다.
+		// 사용자별 lock을 사용하여 다른접근 요청을 제한한다. (임계구역)
 		synchronized (userPointLockManager.getLock(id)) {
 			// 로그기록
 			log.info("::: 🔒 Lock acquired for userId: {}, thread: {}", id, Thread.currentThread().getName());
@@ -61,6 +61,7 @@ public class PointServiceImpl implements PointService {
 
 			// 보유포인트 정보 수정
 			UserPoint result = this.userPointRepository.save(id, pointAfterCharge);
+			log.info("::: {} 작업완료: 유저 id {}의 충전후 보유 포인트: {}", Thread.currentThread().getName(), id, result.point() );
 			return ChargeResponse.from(result);
 		}
 	}
