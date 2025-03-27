@@ -11,7 +11,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import io.hhplus.tdd.exceptions.CustomInvalidRequestException;
-import io.hhplus.tdd.point.UserPointLockManager;
 import io.hhplus.tdd.point.domain.ErrorCode;
 import io.hhplus.tdd.point.domain.TransactionType;
 import io.hhplus.tdd.point.domain.UserPoint;
@@ -33,12 +32,9 @@ public class ChargePointUnitTest {
 	@Mock
 	private UserPointRepository userPointRepository;
 
-	@Mock
-	private UserPointLockManager lockManager;
-
 	@BeforeEach
 	void setUp() {
-		pointService = new PointServiceImpl(userPointRepository, pointHistoryRepository, lockManager);
+		pointService = new PointServiceImpl(userPointRepository, pointHistoryRepository);
 	}
 
 
@@ -115,7 +111,6 @@ public class ChargePointUnitTest {
 		when(userPointRepository.findById(id)).thenReturn(myPoint); // 충전전 보유잔액
 		when(userPointRepository.save(id, pointAfterCharged))
 			.thenReturn(new UserPoint(id, pointAfterCharged, myPoint.updateMillis())); // 충전후 보유잔액
-		when(lockManager.getLock(id)).thenReturn(new Object());
 
 		// when
 		ChargeResponse response = pointService.charge(new ChargeRequest(id, amount)); // 포인트 5000원 충전 수행

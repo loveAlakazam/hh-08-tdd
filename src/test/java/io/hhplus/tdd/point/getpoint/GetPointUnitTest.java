@@ -11,7 +11,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import io.hhplus.tdd.exceptions.CustomInvalidRequestException;
-import io.hhplus.tdd.point.UserPointLockManager;
 import io.hhplus.tdd.point.domain.ErrorCode;
 import io.hhplus.tdd.point.domain.UserPoint;
 import io.hhplus.tdd.point.dto.requests.GetPointRequest;
@@ -32,12 +31,10 @@ public class GetPointUnitTest {
 	@Mock
 	private PointHistoryRepository pointHistoryRepository;
 
-	@Mock
-	private UserPointLockManager lockManager;
 
 	@BeforeEach
 	void setUp() {
-		pointService = new PointServiceImpl(userPointRepository, pointHistoryRepository, lockManager);
+		pointService = new PointServiceImpl(userPointRepository, pointHistoryRepository);
 	}
 
 	@Test

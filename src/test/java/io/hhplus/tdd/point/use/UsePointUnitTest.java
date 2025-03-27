@@ -3,7 +3,6 @@ package io.hhplus.tdd.point.use;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -13,7 +12,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import io.hhplus.tdd.exceptions.CustomBusinessException;
 import io.hhplus.tdd.exceptions.CustomInvalidRequestException;
-import io.hhplus.tdd.point.UserPointLockManager;
 import io.hhplus.tdd.point.domain.ErrorCode;
 import io.hhplus.tdd.point.domain.TransactionType;
 import io.hhplus.tdd.point.domain.UserPoint;
@@ -35,12 +33,10 @@ public class UsePointUnitTest {
 	@Mock
 	private UserPointRepository userPointRepository;
 
-	@Mock
-	private UserPointLockManager lockManager;
 
 	@BeforeEach
 	void setUp() {
-		pointService = new PointServiceImpl(userPointRepository, pointHistoryRepository, lockManager);
+		pointService = new PointServiceImpl(userPointRepository, pointHistoryRepository);
 	}
 
 

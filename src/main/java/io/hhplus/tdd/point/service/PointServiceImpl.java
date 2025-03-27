@@ -6,9 +6,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import io.hhplus.tdd.exceptions.CustomBusinessException;
-import io.hhplus.tdd.point.UserPointLockManager;
-import io.hhplus.tdd.point.domain.ErrorCode;
 import io.hhplus.tdd.point.domain.PointHistory;
 import io.hhplus.tdd.point.domain.TransactionType;
 import io.hhplus.tdd.point.domain.UserPoint;
