@@ -49,11 +49,11 @@ public class PointServiceImpl implements PointService {
 		ReentrantLock lock = userPointLockManager.getLock(id);
 		lock.lock(); // 락 획득하여 다른요청이 들어오지 못하도록 임계구역을 잠금
 		try{
-			// try 블록안은 임계구역 이므로, 하나의 요청이 작업을 수행
-			log.info("::: 🔒 Lock acquired for userId: {}, thread: {}", id, Thread.currentThread().getName());
-
 			// 보유 포인트 조회
 			UserPoint myPoint = this.userPointRepository.findById(id);
+
+			// try 블록안은 임계구역 이므로, 하나의 요청이 작업을 수행
+			log.info("::: 🔒 Lock acquired for userId: {}, thread: {}", id, Thread.currentThread().getName());
 
 			// 포인트 충전
 			long pointAfterCharge = myPoint.charge(amount);
@@ -63,6 +63,7 @@ public class PointServiceImpl implements PointService {
 
 			// 보유포인트 정보 수정
 			UserPoint result = this.userPointRepository.save(id, pointAfterCharge);
+			log.info("::: thread: {} 작업완료:: 유저 id {}의 충전후 보유 포인트: {}",Thread.currentThread().getName(),  id, result.point() );
 			return ChargeResponse.from(result);
 		} finally {
 			lock.unlock(); // 락을 반환하여 임계구역을 잠금해제
