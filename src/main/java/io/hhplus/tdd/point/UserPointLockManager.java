@@ -10,6 +10,6 @@ public class UserPointLockManager {
 	private final ConcurrentHashMap<Long, ReentrantLock> locks = new ConcurrentHashMap<>();
 
 	public ReentrantLock getLock(long id) {
-		return locks.computeIfAbsent(id, key -> new ReentrantLock());
+		return locks.computeIfAbsent(id, key -> new ReentrantLock(true));
 	}
 }
