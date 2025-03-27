@@ -20,9 +20,6 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import io.hhplus.tdd.database.PointHistoryTable;
-import io.hhplus.tdd.point.UserPointLockManager;
-import io.hhplus.tdd.point.dto.requests.ChargeRequest;
 import io.hhplus.tdd.point.dto.requests.ChargeRequestBody;
 import io.hhplus.tdd.point.repository.PointHistoryRepository;
 import io.hhplus.tdd.point.repository.UserPointRepository;
@@ -47,8 +44,6 @@ public class ChargeConcurrencyTest {
 	@Autowired
 	private ObjectMapper objectMapper;
 
-	@Autowired
-	private UserPointLockManager userPointLockManager;
 
 	private static final Logger log = LoggerFactory.getLogger(ChargeConcurrencyTest.class);
 

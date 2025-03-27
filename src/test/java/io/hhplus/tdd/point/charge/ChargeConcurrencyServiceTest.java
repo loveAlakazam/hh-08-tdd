@@ -2,7 +2,6 @@ package io.hhplus.tdd.point.charge;
 
 import static java.lang.Thread.*;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -15,7 +14,6 @@ import org.slf4j.LoggerFactory;
 
 import io.hhplus.tdd.database.PointHistoryTable;
 import io.hhplus.tdd.database.UserPointTable;
-import io.hhplus.tdd.point.UserPointLockManager;
 import io.hhplus.tdd.point.dto.requests.ChargeRequest;
 import io.hhplus.tdd.point.repository.PointHistoryRepository;
 import io.hhplus.tdd.point.repository.PointHistoryRepositoryImpl;
@@ -33,17 +31,15 @@ public class ChargeConcurrencyServiceTest {
 
 	private PointHistoryRepository pointHistoryRepository;
 
-	private UserPointLockManager userPointLockManager;
 
 	private static final Logger log = LoggerFactory.getLogger(ChargeConcurrencyServiceTest.class);
 
 	@BeforeEach
 	void setUp() {
 		// 직접 의존성 주입(SpringBootTest / Autowired 을 사용시 자동으로 의존성주입)
-		userPointLockManager = new UserPointLockManager();
 		pointHistoryRepository = new PointHistoryRepositoryImpl(new PointHistoryTable());
 		userPointRepository = new UserPointRepositoryImpl(new UserPointTable());
-		pointService = new PointServiceImpl(userPointRepository, pointHistoryRepository, userPointLockManager);
+		pointService = new PointServiceImpl(userPointRepository, pointHistoryRepository);
 
 		// UserPoint 의 초기 포인트값을 0 으로한다.
 		userPointRepository.save(1L, 0L);
