@@ -1,5 +1,6 @@
 package io.hhplus.tdd.point.charge;
 
+import static java.lang.Thread.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 
@@ -11,54 +12,42 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.http.MediaType;
-import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.web.servlet.MockMvc;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.hhplus.tdd.database.PointHistoryTable;
+import io.hhplus.tdd.database.UserPointTable;
 import io.hhplus.tdd.point.UserPointLockManager;
 import io.hhplus.tdd.point.dto.requests.ChargeRequest;
-import io.hhplus.tdd.point.dto.requests.ChargeRequestBody;
 import io.hhplus.tdd.point.repository.PointHistoryRepository;
+import io.hhplus.tdd.point.repository.PointHistoryRepositoryImpl;
 import io.hhplus.tdd.point.repository.UserPointRepository;
+import io.hhplus.tdd.point.repository.UserPointRepositoryImpl;
 import io.hhplus.tdd.point.service.PointService;
+import io.hhplus.tdd.point.service.PointServiceImpl;
 
-@SpringBootTest
-@AutoConfigureMockMvc
-@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
-public class ChargeConcurrencyTest {
-	@Autowired
-	private MockMvc mockMvc;
 
-	@Autowired
+public class ChargeConcurrencyServiceTest {
+
 	private PointService pointService;
 
-	@Autowired
 	private UserPointRepository userPointRepository;
 
-	@Autowired
 	private PointHistoryRepository pointHistoryRepository;
 
-	@Autowired
-	private ObjectMapper objectMapper;
-
-	@Autowired
 	private UserPointLockManager userPointLockManager;
 
-	private static final Logger log = LoggerFactory.getLogger(ChargeConcurrencyTest.class);
-
+	private static final Logger log = LoggerFactory.getLogger(ChargeConcurrencyServiceTest.class);
 
 	@BeforeEach
 	void setUp() {
+		// 직접 의존성 주입(SpringBootTest / Autowired 을 사용시 자동으로 의존성주입)
+		userPointLockManager = new UserPointLockManager();
+		pointHistoryRepository = new PointHistoryRepositoryImpl(new PointHistoryTable());
+		userPointRepository = new UserPointRepositoryImpl(new UserPointTable());
+		pointService = new PointServiceImpl(userPointRepository, pointHistoryRepository, userPointLockManager);
+
 		// UserPoint 의 초기 포인트값을 0 으로한다.
 		userPointRepository.save(1L, 0L);
 	}
-
 
 	@Test
 	void 한명의_유저가_동시에_1000원_충전을_100번_요청했을때_정상적으로_합산에_성공해야한다() throws Exception {
@@ -69,17 +58,14 @@ public class ChargeConcurrencyTest {
 
 		ExecutorService executor = Executors.newFixedThreadPool(10); // 스레드풀 10개
 		CountDownLatch latch = new CountDownLatch(threadCount); // 요청가능한 스레드개수
-		ChargeRequestBody requestBody = new ChargeRequestBody(chargeAmount);
-		String json = objectMapper.writeValueAsString(requestBody);
+		ChargeRequest request = new ChargeRequest(id , chargeAmount);
 
 		// when
 		for(int i = 0 ; i < threadCount ; i++) {
 			executor.submit(()-> {
 				try {
 					// 포인트충전 API 호출
-					mockMvc.perform(patch("/point/"+id+"/charge")
-						.contentType(MediaType.APPLICATION_JSON)
-						.content(json));
+					pointService.charge(request);
 				} catch (Exception e) {
 					e.printStackTrace();
 					throw new RuntimeException(e);
@@ -90,7 +76,7 @@ public class ChargeConcurrencyTest {
 		}
 
 		latch.await(); // 다 끝날 때까지 대기
-		Thread.sleep(1000); // 1초 정도 대기후 최종 포인트 확인
+		sleep(1000); // 1초 정도 대기후 최종 포인트 확인
 
 		// then
 		long expectedPoint = chargeAmount * threadCount;
@@ -115,21 +101,14 @@ public class ChargeConcurrencyTest {
 
 		// when
 		for(long id = 1L; id <= numberOfUsers; id++) {
-			ChargeRequestBody requestBody = new ChargeRequestBody(chargeAmount);
-			String json = objectMapper.writeValueAsString(requestBody);
-			// if(id ==1L) {
-			// 	wait(30*1000); // 30초 대기
-			// }
-
+			ChargeRequest request = new ChargeRequest(id, chargeAmount);
 
 			// 유저 1명당 10번을 요청한다.
 			for(int i = 0 ; i < requestPerUser; i++) {
 				long uid = id;
 				executor.submit(() -> {
 					try {
-						mockMvc.perform(patch("/point/"+ uid +"/charge")
-							.contentType(MediaType.APPLICATION_JSON)
-							.content(json));
+						pointService.charge(request);
 					} catch(Exception e) {
 						e.printStackTrace();
 						throw new RuntimeException(e);
@@ -141,7 +120,7 @@ public class ChargeConcurrencyTest {
 		}
 
 		latch.await();
-		Thread.sleep(1000);
+		sleep(1000);
 
 		// then
 		log.info("::: 테스트 종료후 유저별 보유포인트 조회 :::");
