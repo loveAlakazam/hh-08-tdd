@@ -13,6 +13,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import io.hhplus.tdd.exceptions.CustomBusinessException;
 import io.hhplus.tdd.exceptions.CustomInvalidRequestException;
+import io.hhplus.tdd.point.UserPointLockManager;
 import io.hhplus.tdd.point.domain.ErrorCode;
 import io.hhplus.tdd.point.domain.TransactionType;
 import io.hhplus.tdd.point.domain.UserPoint;
@@ -34,9 +35,12 @@ public class UsePointUnitTest {
 	@Mock
 	private UserPointRepository userPointRepository;
 
+	@Mock
+	private UserPointLockManager userPointLockManager;
+
 	@BeforeEach
 	void setUp() {
-		pointService = new PointServiceImpl(userPointRepository, pointHistoryRepository);
+		pointService = new PointServiceImpl(userPointRepository, pointHistoryRepository,userPointLockManager);
 	}
 
 

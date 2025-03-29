@@ -3,6 +3,8 @@ package io.hhplus.tdd.point.charge;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import java.util.concurrent.locks.ReentrantLock;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -11,6 +13,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import io.hhplus.tdd.exceptions.CustomInvalidRequestException;
+import io.hhplus.tdd.point.UserPointLockManager;
 import io.hhplus.tdd.point.domain.ErrorCode;
 import io.hhplus.tdd.point.domain.TransactionType;
 import io.hhplus.tdd.point.domain.UserPoint;
@@ -32,9 +35,12 @@ public class ChargePointUnitTest {
 	@Mock
 	private UserPointRepository userPointRepository;
 
+	@Mock
+	private UserPointLockManager userPointLockManager;
+
 	@BeforeEach
 	void setUp() {
-		pointService = new PointServiceImpl(userPointRepository, pointHistoryRepository);
+		pointService = new PointServiceImpl(userPointRepository, pointHistoryRepository, userPointLockManager);
 	}
 
 
@@ -111,6 +117,7 @@ public class ChargePointUnitTest {
 		when(userPointRepository.findById(id)).thenReturn(myPoint); // 충전전 보유잔액
 		when(userPointRepository.save(id, pointAfterCharged))
 			.thenReturn(new UserPoint(id, pointAfterCharged, myPoint.updateMillis())); // 충전후 보유잔액
+		when(userPointLockManager.getLock(id)).thenReturn(new ReentrantLock());
 
 		// when
 		ChargeResponse response = pointService.charge(new ChargeRequest(id, amount)); // 포인트 5000원 충전 수행
